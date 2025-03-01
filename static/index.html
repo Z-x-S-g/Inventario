@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .bajo-stock {
+            background-color: #ffebee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Sistema de Inventario</h1>
+        
+        <!-- Alertas de bajo stock -->
+        <div id="alertas" class="alert alert-warning d-none" role="alert">
+            ¡Hay productos con bajo stock!
+        </div>
+
+        <!-- Tabs de navegación -->
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="inventario-tab" data-bs-toggle="tab" data-bs-target="#inventario" type="button">Inventario</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="movimientos-tab" data-bs-toggle="tab" data-bs-target="#movimientos" type="button">Movimientos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes" type="button">Reportes</button>
+            </li>
+        </ul>
+
+        <!-- Contenido de los tabs -->
+        <div class="tab-content" id="myTabContent">
+            <!-- Tab Inventario -->
+            <div class="tab-pane fade show active" id="inventario">
+                <button class="btn btn-primary mb-3" onclick="mostrarFormularioProducto()">Nuevo Producto</button>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Categoría</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Punto de Reorden</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-productos"></tbody>
+                </table>
+            </div>
+
+            <!-- Tab Movimientos -->
+            <div class="tab-pane fade" id="movimientos">
+                <div class="row mb-3">
+                    <div class="col">
+                        <button class="btn btn-success" onclick="mostrarFormularioMovimiento('entrada')">Registrar Entrada</button>
+                        <button class="btn btn-danger" onclick="mostrarFormularioMovimiento('salida')">Registrar Salida</button>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <select class="form-select" id="producto-movimientos" onchange="cargarMovimientosProducto()">
+                            <option value="">Seleccione un producto...</option>
+                        </select>
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                            <th>Notas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-movimientos"></tbody>
+                </table>
+            </div>
+
+            <!-- Tab Reportes -->
+            <div class="tab-pane fade" id="reportes">
+                <div class="row mb-3">
+                    <div class="col">
+                        <select class="form-select" id="periodo-reporte" onchange="cargarReporte()">
+                            <option value="dia">Día</option>
+                            <option value="semana">Semana</option>
+                            <option value="mes">Mes</option>
+                        </select>
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Stock Actual</th>
+                            <th>Entradas</th>
+                            <th>Salidas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-reporte"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Producto -->
+    <div class="modal fade" id="productoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="producto-form">
+                        <input type="hidden" id="producto-id">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="producto-nombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="producto-descripcion"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Categoría</label>
+                            <input type="text" class="form-control" id="producto-categoria">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" class="form-control" id="producto-cantidad" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Precio Unitario</label>
+                            <input type="number" step="0.01" class="form-control" id="producto-precio" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Punto de Reorden</label>
+                            <input type="number" class="form-control" id="producto-reorden" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarProducto()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Movimiento -->
+    <div class="modal fade" id="movimientoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrar Movimiento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="movimiento-form">
+                        <input type="hidden" id="movimiento-tipo">
+                        <div class="mb-3">
+                            <label class="form-label">Producto</label>
+                            <select class="form-select" id="movimiento-producto" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" class="form-control" id="movimiento-cantidad" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notas</label>
+                            <textarea class="form-control" id="movimiento-notas"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarMovimiento()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
